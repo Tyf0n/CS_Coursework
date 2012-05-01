@@ -1,0 +1,195 @@
+Nathaniel Lim
+CS432 - Assignment 4:
+Multi-threaded Tuple Space
+------------------------------------------
+Functionality supported (found in ts.c):
+
+out ( char * shape, ...);
+int  inp ( char * form,  ...);
+int  rdp ( char * form,  ...);
+int  in  ( char * form,  ...);
+rd  ( char * form,  ...);
+int  eval( char * format,...);
+
+Misc:
+
+static hash tuplespace;		A hashtable storing a tuplelist for every shape
+void printTuples(char * shape);		For Debugging
+char* strcpy_exclude(char * sink, char * source, char c);	To discern shape from form
+int char_count(char c, char *s);	To determine the number of evaluations required in an eval call
+void remove_tl(tl prev, tl list, char * shape );	Used for removal of a tuple in the list of a given shape.
+tl tl_alloc(char * shape);	Allocate a new tuplelist of type shape
+void init_ts(void);	For initilization of all global variables and thread controls, called by pthread_once
+struct eval_args{
+	int * int_result;
+	char * s_result;
+	char return_type;
+	void *(*f)(void*);
+	void *arg;
+};
+
+
+For my concurrency issues, since POSIX does not support rwlocks to be passed to the
+pthread_cond_wait( pthread_mutex_t *) function, I needed a work around.
+So I used the following threading variables:
+
+static pthread_once_t once_control = PTHREAD_ONCE_INIT;  (I only want to initialize my variables once,
+							  but possibly in any function.)
+pthread_rwlock_t lock;
+pthread_mutex_t  signaling_mutex;
+pthread_cond_t tuple_added;
+
+
+inp: 	initialize
+	get rwlock_wrlock
+	reads args, read and consume tuple
+	release rwlock
+
+rdp: 	initialize
+	get rwlock_wrlock
+	reads args, read tuple
+	release rwlock
+
+
+
+out: 	initialize
+	read args
+	get rwlock_wrlock
+	get signaling_mutex
+	write tuple
+	release signaling_mutex
+	broadcast(tuple_added)
+	release rwlock
+
+
+in: 	initialize
+	get rwlock_wrlock
+	get signaling_mutex
+	while(1) {
+		read args
+		Match: 
+			read and consume tuple
+			release signaling_mutex
+			release rwlock
+			return 1
+		!Match:
+			release rwlock
+			wait(tuple_added, signaling_mutex) // Releases signaling_mutex, waits for signal
+							//  Acquires signaling_mutex before returning
+			get rwlock_wrlock	       //   If another tuple is added, try to read and consume   	
+
+	}
+
+rd: 	initialize
+	get rwlock_rdlock
+	get signaling_mutex
+	while(1) {
+		read args
+		Match: 
+			read tuple
+			release signaling_mutex
+			release rwlock
+			return 1
+		!Match:
+			release rwlock
+			wait(tuple_added, signaling_mutex) // Releases signaling_mutex, waits for signal
+							  //  Acquires signaling_mutex before returning
+			get rwlock_wrlock	         //   If another tuple is added, try to read   	
+
+	}
+
+
+For my eval function I determine how many evaluations
+I need to perform and create an array of threads to store them
+I read the function in as a void*(*) (void*) and then cast it to
+int (*) (void*) or char*(*) (void*) accordingly.  I spawn off a thread
+for each evaluation, and then wait for them all to finish (join) before
+I write the tuple.  This speeds up computation since you are able to 
+call multiple worker functions that individually may take a long time to compute,
+but do so in parallel.
+(See test for a quick demonstration of this)
+
+eval: 
+	initialize
+	readargs:
+		if value is to be evaluated, spawn thread to run worker function
+		else add value to the tuple, and normal
+	
+	get rwlock_wrlock
+	get signaling_mutex
+	write tuple
+	release signaling_mutex
+	broadcast(tuple_added)
+	release rwlock
+	
+
+----------------------------------------------------------
+What this means for the concurency, for reading and writing/editing:
+
+Since I was unable to use rwlocks with a condition wait and signal I needed
+to couple the broadcasting with another mutex.  But this is only required in functions
+that wait on the condition, and those that signal the condition.  Thus the needs are:
+
+inp, rdp:  Require only the wrlock and rdlock respectively
+
+in, out, eval: Require wrlock and signaling_mutex
+
+rd:  Requires rdlock and signaling_mutex 
+
+Consequences and Considerations:
+	This means that all the threads trying to read acquire the 
+	rwlock if another reader is holding it, however if a writer
+	is holding it, they must wait to obtain it.  Writers cant obtain
+	the lock is a thread is reading
+
+	rdp can run while rd is waiting for a signal, but should be stopped
+	if a thread starts writing
+
+	Writers need to have sole control over the tuple space
+
+	I make sure in functions that use both the rwlock and the signaling_mutex
+
+	rdp should seize control when there are threads running in and getting no matches
+	(see test)
+
+
+-----------------------------------------------------------
+My test program does the following:
+
+1) Compares evaluation time of:
+	doing eval("!i!i", slow_strlen, "Hello", slow_strlen, "World!")
+	versus computing the results and then using out
+	
+	slow_strlen(char * string) sleeps for 1 second, and then computes strlen(string) 
+2) Trying two different evaluations:  
+	eval("s!is!i", "Length", strlen, "Hello World", "Other Length", inc, &oldvalue);
+
+3) Read in the input file, spawn two threads that are looking for the first words that occur
+   4 and 2 times.  Then run the rdp from the main program thread.  The rdp should seize control.
+
+------------------------------------------------
+The results of running:
+
+make test
+./test < textinput.txt
+
+A Simple Test of Concurrency (calling my slow_strlen function):
+Tuples with Shape ii:	(5, 6, ) --> 
+Time spent using eval: 1.000000
+Tuples with Shape ii:	(6, 5, ) --> (5, 6, ) --> 
+Time spent pre-computing (serially) and using out:  2.000000
+
+Another of the eval method, with two different evaluations
+Tuples with Shape sisi:	(Length, 11, Other Length, 4, ) --> 
+
+A Test of rwlocks with conditional signal:
+I want the current thread to read, while two in's fight over the lock
+Using in to look for the first word to occur 2 times
+Using in to look for the first word to occur 4 times
+Starting the scanning
+Word was: Blank
+Done reading in
+space was the first word to occur 2 times, consume it! 
+nathaniel was the first word to occur 4 times, consume it! 
+We still read nathaniel occurring, 4 times
+Tuples with Shape si:	(tuple, 1, ) --> (threaded, 1, ) --> 
