@@ -1,0 +1,116 @@
+Here is the output for our fairness experiment.  The experiment sets up the differing topologies and compares how the Ethernet is at serving equal bandwidth to its hosts.
+
+Here are the three topologies involving 6 Hosts:
+
+Topology 1:
+
+Hosts 0-4 are on Repeater 1
+Host  5   is  on Repeater 10 (10,000 feet away from Repeater 1)
+
+Topology 2:
+
+Hosts 0-5 are on Repeater n+1 (one Host per repeater, Repeaters separated by 1000 feet)
+
+Topology 3:
+
+Hosts 0-4 are on Repeater 1
+Host  5   is  on Repeater 10 (10,000 feet away from Repeater 1)
+
+
+
+
+EthernetSimulator by Nathaniel Lim and Lee Wang
+Type "quit" at any time to exit this program.
+Run a new experiment? (y/n)
+y
+Initializing simulation with 6 transmitting hosts and 64 byte sized packets. Trial 0
+Host 0: Sent 2721 packets; Dropped 0 packets;
+Host 1: Sent 2056 packets; Dropped 1 packets;
+Host 2: Sent 1092 packets; Dropped 2 packets;
+Host 3: Sent 2218 packets; Dropped 0 packets;
+Host 4: Sent 68 packets; Dropped 3 packets;
+Host 5: Sent 2 packets; Dropped 4 packets;
+Fairness Index: 0.6245397194861242
+
+Initializing simulation with 6 transmitting hosts and 128 byte sized packets. Trial 0
+Host 0: Sent 16865 packets; Dropped 37 packets;
+Host 1: Sent 15740 packets; Dropped 36 packets;
+Host 2: Sent 17974 packets; Dropped 35 packets;
+Host 3: Sent 18410 packets; Dropped 36 packets;
+Host 4: Sent 13997 packets; Dropped 43 packets;
+Host 5: Sent 54 packets; Dropped 62 packets;
+Fairness Index: 0.8267474190892509
+
+Initializing simulation with 6 transmitting hosts and 256 byte sized packets. Trial 0
+Host 0: Sent 10065 packets; Dropped 35 packets;
+Host 1: Sent 9072 packets; Dropped 38 packets;
+Host 2: Sent 9078 packets; Dropped 36 packets;
+Host 3: Sent 7011 packets; Dropped 44 packets;
+Host 4: Sent 9235 packets; Dropped 37 packets;
+Host 5: Sent 25 packets; Dropped 61 packets;
+Fairness Index: 0.8236443858696922
+
+Initializing simulation with 6 transmitting hosts and 512 byte sized packets. Trial 0
+Host 0: Sent 4296 packets; Dropped 39 packets;
+Host 1: Sent 4407 packets; Dropped 40 packets;
+Host 2: Sent 5406 packets; Dropped 36 packets;
+Host 3: Sent 5065 packets; Dropped 34 packets;
+Host 4: Sent 3664 packets; Dropped 43 packets;
+Host 5: Sent 40 packets; Dropped 62 packets;
+Fairness Index: 0.8215385028708151
+
+Initializing simulation with 6 transmitting hosts and 768 byte sized packets. Trial 0
+Host 0: Sent 2371 packets; Dropped 45 packets;
+Host 1: Sent 3248 packets; Dropped 36 packets;
+Host 2: Sent 3721 packets; Dropped 32 packets;
+Host 3: Sent 3089 packets; Dropped 35 packets;
+Host 4: Sent 2973 packets; Dropped 37 packets;
+Host 5: Sent 38 packets; Dropped 61 packets;
+Fairness Index: 0.8209179011136585
+
+Initializing simulation with 6 transmitting hosts and 1024 byte sized packets. Trial 0
+Host 0: Sent 2507 packets; Dropped 35 packets;
+Host 1: Sent 2235 packets; Dropped 37 packets;
+Host 2: Sent 2268 packets; Dropped 36 packets;
+Host 3: Sent 2290 packets; Dropped 36 packets;
+Host 4: Sent 2095 packets; Dropped 38 packets;
+Host 5: Sent 86 packets; Dropped 57 packets;
+Fairness Index: 0.8428580996314334
+
+Initializing simulation with 6 transmitting hosts and 1536 byte sized packets. Trial 0
+Host 0: Sent 1420 packets; Dropped 37 packets;
+Host 1: Sent 1624 packets; Dropped 34 packets;
+Host 2: Sent 1330 packets; Dropped 40 packets;
+Host 3: Sent 1570 packets; Dropped 34 packets;
+Host 4: Sent 1709 packets; Dropped 33 packets;
+Host 5: Sent 65 packets; Dropped 57 packets;
+Fairness Index: 0.8404580770077841
+
+Initializing simulation with 6 transmitting hosts and 2048 byte sized packets. Trial 0
+Host 0: Sent 897 packets; Dropped 40 packets;
+Host 1: Sent 813 packets; Dropped 40 packets;
+Host 2: Sent 1607 packets; Dropped 24 packets;
+Host 3: Sent 1451 packets; Dropped 30 packets;
+Host 4: Sent 932 packets; Dropped 37 packets;
+Host 5: Sent 64 packets; Dropped 56 packets;
+Bits of packet data sent:95359616; Total bit times: 1.0000081246078888E8
+Average transmission delay: 36785.32853649764; Fairness Index: 0.7880801447044155
+
+Initializing simulation with 6 transmitting hosts and 3072 byte sized packets. Trial 0
+Host 0: Sent 261 packets; Dropped 6 packets;
+Host 1: Sent 144 packets; Dropped 9 packets;
+Host 2: Sent 183 packets; Dropped 10 packets;
+Host 3: Sent 194 packets; Dropped 8 packets;
+Host 4: Sent 175 packets; Dropped 10 packets;
+Host 5: Sent 20 packets; Dropped 14 packets;
+Fairness Index: 0.8328223630415509
+
+Initializing simulation with 6 transmitting hosts and 4000 byte sized packets. Trial 0
+Host 0: Sent 652 packets; Dropped 28 packets;
+Host 1: Sent 736 packets; Dropped 23 packets;
+Host 2: Sent 517 packets; Dropped 33 packets;
+Host 3: Sent 387 packets; Dropped 38 packets;
+Host 4: Sent 483 packets; Dropped 36 packets;
+Host 5: Sent 118 packets; Dropped 44 packets;
+Fairness Index: 0.8551952159081929
+

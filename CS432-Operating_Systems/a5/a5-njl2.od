@@ -1,0 +1,113 @@
+Nathaniel Lim
+CS432 - Operating Systems
+A5 - WUFS
+---------------------------
+Changes to Supernode:
+	- Changed max file size from u16 to u32, there is padding
+	  so the size falls on the u32 boundary, Bytes 16-19 (0 origin)
+Changes to Inode:
+	- Increased file size from u16 to u32
+	- 7 Direct Block Pointers (was 9)
+	- 1 Indirect Block Pointer (last two bytes in Inode)
+	- Inode still 32 Bytes
+	- Consequence: Since each block address is a two byte address
+			then there are 512 addresses available in the indirect block
+			Max File Size: 7 + 512 ->  519K
+
+Changes to Directory Entry
+	- Expand from 16 to 32 Bytes
+	- Consequence: 30 character file names, 32 files in directory (was 64)
+	  	      This limitation on the number of files could easily be remedied
+			by allowing a directory entry to span many blocks
+
+Creating Bad Block Files:
+	- Now if there are more than 7 Bad blocks, an indirect block is created, and filled 
+	with the bad block addresses
+-------------------------------------------------
+-> dd bs=1k count=600 if=/dev/zero of=a5.img
+600+0 records in
+600+0 records out
+614400 bytes (614 kB) copied, 0.0133393 s, 46.1 MB/s
+-> ./mkfs.wufs -v -c -l bad_block_file_2 a5.img 
+Max File size: 81c00
+block 0 reserved to hold boot sector
+block 1 holds super block, Size: 20 Bytes
+600 data blocks available
+   1 block(s) reserved for block map
+224 inodes allocated
+   inodes contain 7 pointers
+   1 block(s) reserved for inode map
+   7 block(s) reserved for 32 byte inodes
+first data block is block 11
+maximum file size is 531456 Bytes
+size of directory entry: 32
+Checking disk blocks...done.
+Bad blocks read from bad_block_file_2:
+ 12 13 14 15 17 18 19 20 21 22 23 24 25 26 27 28
+16 bad blocks found.
+Root directory is at inode 1, using block 11.
+Placing the following bad blocks in /.bad-0:
+ 12 13 14 15 17 18 19 20 21 22 23 24 25 26 27 28
+1 indirect blocks allocated at blocks: 16 
+file system written.
+-> od -Ax -xa a5.img
+000000    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+000400    1eef    0001    0258    000b    00e0    0001    0001    0000
+         o  rs soh nul   X stx  vt nul   ` nul soh nul soh nul nul nul
+000410    1c00    0008    0000    0000    0000    0000    0000    0000
+       nul  fs  bs nul nul nul nul nul nul nul nul nul nul nul nul nul
+000420    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+000800    0003    0000    0000    0000    0000    0000    0000    0000
+       etx nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+000810    0000    0000    0000    0000    0000    0000    ffff    ffff
+       nul nul nul nul nul nul nul nul nul nul nul nul del del del del
+000820    ffff    ffff    ffff    ffff    ffff    ffff    ffff    ffff
+       del del del del del del del del del del del del del del del del
+*
+000c00    ffff    1fff    0000    0000    0000    0000    0000    0000
+       del del del  us nul nul nul nul nul nul nul nul nul nul nul nul
+000c10    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+000c40    0000    0000    0000    0000    0000    ff00    ffff    ffff
+       nul nul nul nul nul nul nul nul nul nul nul del del del del del
+000c50    ffff    ffff    ffff    ffff    ffff    ffff    ffff    ffff
+       del del del del del del del del del del del del del del del del
+*
+001000    41ed    0002    9db1    9db1    80c5    4daa    0060    0000
+         m   A stx nul   1  gs   1  gs   E nul   *   M   ` nul nul nul
+001010    000b    0000    0000    0000    0000    0000    0000    0000
+        vt nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+001020    81a4    0001    9db1    9db1    80c5    4daa    4000    0000
+         $ soh soh nul   1  gs   1  gs   E nul   *   M nul   @ nul nul
+001030    000c    000d    000e    000f    0011    0012    0013    0010
+        ff nul  cr nul  so nul  si nul dc1 nul dc2 nul dc3 nul dle nul
+001040    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+002c00    0001    002e    0000    0000    0000    0000    0000    0000
+       soh nul   . nul nul nul nul nul nul nul nul nul nul nul nul nul
+002c10    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+002c20    0001    2e2e    0000    0000    0000    0000    0000    0000
+       soh nul   .   . nul nul nul nul nul nul nul nul nul nul nul nul
+002c30    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+002c40    0002    622e    6461    302d    0000    0000    0000    0000
+       stx nul   .   b   a   d   -   0 nul nul nul nul nul nul nul nul
+002c50    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+004000    0014    0015    0016    0017    0018    0019    001a    001b
+       dc4 nul nak nul syn nul etb nul can nul  em nul sub nul esc nul
+004010    001c    0000    0000    0000    0000    0000    0000    0000
+        fs nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+004020    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+096000
+

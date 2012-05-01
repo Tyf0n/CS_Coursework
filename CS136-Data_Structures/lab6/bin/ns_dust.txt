@@ -1,0 +1,33 @@
+35 29 Dust
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XxxxxxxxxxxxxxxxX      XxxxxxxxxxxX
+XxxxxxxxxxxxxxxxX  aa  XxxxxxxxxxxX
+XXXXXXXXXXXXXXXXX +aa  XxxxxxxxxxxX
+X       XxxxxxX        XxxxxxxxxxxX
+X  000  XxxxxxX       +XxxxxxxxxxxX
+X  000  XxxxxxX        XxxxxxxxxxxX
+X  000  XxxxxxX        XxxxxxxxxxxX
+X X     XxxxxxXX XX    XxxxxxxxxxxX
+X X +0 +XXXXXxx# #X+   XXXXXXXXXXXX
+X           Xxx# #X    XXX        X
+X           Xxx# #XX  XXXXX  +    X
+X           Xxx#      +X   X  111 X
+X       XX  Xx## #X+   X      111+X
+X       XX  X##  #X    XXX    111+X
+X X     XX       #X               X
+X X   ++XX       #X    XX         X
+X X     XX  X##  #X    XXXX X XX  X
+XX  XXXXXX  XX# ##X    X    X XX 1X
+XX       X   X# #X     X X XX XX  X
+XX       X   XX XX X X X X        X   
+XX+      X   XX    X X X XXXXXXXXXX
+XX     XXX  XXXXXXXX X X XxxxxxxxxX
+XX           ###+ #  X   XxxxxxxxxX
+XX  XXX              X X XxxxxxxxxX
+XX  XxX  +++X## ###  XXXXXxxxxxxxxX
+XX  XxX     XXXXXXXXXXxxxxxxxxxxxxX
+XXXXXxX XXXXXxxxxxxxxxxxxxxxxxxxxxX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Inspired by the Counter-Strike Map 
+"de_dust"

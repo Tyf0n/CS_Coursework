@@ -1,0 +1,43 @@
+000000    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+000400    0eef    0001    0014    0005    0020    0001    0001    2400
+         o  so soh nul dc4 nul enq nul  sp nul soh nul soh nul nul   $
+000410    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+000800    0007    0000    ffff    ffff    ffff    ffff    ffff    ffff
+       bel nul nul nul del del del del del del del del del del del del
+000810    ffff    ffff    ffff    ffff    ffff    ffff    ffff    ffff
+       del del del del del del del del del del del del del del del del
+*
+000c00    ffff    fff0    ffff    ffff    ffff    ffff    ffff    ffff
+       del del   p del del del del del del del del del del del del del
+000c10    ffff    ffff    ffff    ffff    ffff    ffff    ffff    ffff
+       del del del del del del del del del del del del del del del del
+*
+001000    41ed    0002    283c    283c    abbe    4d9d    0040    000a
+         m   A stx nul   <   (   <   (   >   +  gs   M   @ nul  nl nul
+001010    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+001020    81a4    0001    283c    283c    abbe    4d9d    2400    0005
+         $ soh soh nul   <   (   <   (   >   +  gs   M nul   $ enq nul
+001030    0006    0007    0008    0009    000b    000c    000d    000e
+       ack nul bel nul  bs nul  ht nul  vt nul  ff nul  cr nul  so nul
+001040    81a4    0001    283c    283c    abbe    4d9d    0400    000f
+         $ soh soh nul   <   (   <   (   >   +  gs   M nul eot  si nul
+001050    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+002800    0001    002e    0000    0000    0000    0000    0000    0000
+       soh nul   . nul nul nul nul nul nul nul nul nul nul nul nul nul
+002810    0001    2e2e    0000    0000    0000    0000    0000    0000
+       soh nul   .   . nul nul nul nul nul nul nul nul nul nul nul nul
+002820    0002    622e    6461    302d    0000    0000    0000    0000
+       stx nul   .   b   a   d   -   0 nul nul nul nul nul nul nul nul
+002830    0003    622e    6461    312d    0000    0000    0000    0000
+       etx nul   .   b   a   d   -   1 nul nul nul nul nul nul nul nul
+002840    0000    0000    0000    0000    0000    0000    0000    0000
+       nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul nul
+*
+005000

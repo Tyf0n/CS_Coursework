@@ -1,0 +1,9 @@
+Nathaniel Lim
+CS432
+2/9/2011
+--------------------------------
+Since my Hash Table does not utilize the Circular Queue Structure in this directory,
+I compiled and ran the type program as follows:
+
+gcc -Wall -o type type.c hash.c
+./type

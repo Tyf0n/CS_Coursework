@@ -1,0 +1,56 @@
+/*
+ * Nathaniel Lim 11/3
+ * 
+ */
+
+package Ethernet;
+
+
+import java.util.PriorityQueue;
+import java.util.ArrayList;
+
+
+
+public class SimulatedTime {
+
+	private PriorityQueue<SimulatedEvent> timeline;
+	private ArrayList<Host> hostlist;
+
+	public SimulatedTime (PriorityQueue<SimulatedEvent> t, ArrayList<Host> hl) {
+		timeline = t;
+		hostlist = hl;
+	}
+
+
+	public boolean elapse(){
+		SimulatedEvent currentevent = timeline.poll();
+		if (currentevent == null){
+			return false;
+		} else {
+			for (Host h : hostlist){
+				h.reactToEvent(currentevent);			
+			}
+			return true;
+		}
+	}
+
+
+	public boolean schedule(SimulatedEvent e){
+		return timeline.add(e);
+	}
+
+	public boolean deschedule(SimulatedEvent e){
+		return timeline.remove(e);
+	}
+
+    //public static void main (String [] args) {
+			
+    //}
+
+	
+
+
+
+
+
+}

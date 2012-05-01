@@ -1,0 +1,41 @@
+package project;
+
+public class King extends Piece {
+
+	public King (ChessBoard world, boolean isObserver){
+		this.world = world;
+		this.isObserver = isObserver;
+		actions = KingAction.values();
+	}
+	
+	@Override
+	protected double qFunction(int s, int a) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double transitionProb(int s, int t) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void updateQ(int s, int a, double value) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void updateV(int s, double value) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected double vFunction(int s) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+}

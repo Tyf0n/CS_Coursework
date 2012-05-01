@@ -1,0 +1,595 @@
+
+
+! (c) 2008 Nathaniel Lim
+! Williams College, Fall 2008, CS237
+! Phase 3 of the Microcode project,
+! Implementing most of the ops, and 
+! addressing modes.
+! Last edited 12/3/2008, 15:15 
+! Setting up the registers
+
+pc = r[1]
+2048 = r[2]
+1 = r[3]
+32 = r[4]
+63 = r[6]
+sp = r[7]	! registers
+temp = r[23]
+temp2= r[5]
+dst = r[24]
+src = r[25]
+dstea = r[26]
+srcea = r[27]
+
+
+d0 = r[8]	!  Data Registers
+d1 = r[9]
+d2 = r[10]
+d3 = r[11]
+d4 = r[12]
+d5 = r[13]
+d6 = r[14]
+d7 = r[15]
+
+a0 = r[16]	!  Address Registers
+a1 = r[17]
+a2 = r[18]
+a3 = r[19]
+a4 = r[20]
+a5 = r[21]
+a6 = r[22]
+a7 = r[7]	! Implicitly the stack pointer
+
+tir = r[28]	! Temporary Instruction register
+ir = r[29]	! Instruction register
+mpc = r[30]	! Micro-program counter
+
+
+begin					
+	1  := #0;
+	mar:= 1; rd;				! Initial Setting of pc in 
+	sp := inv(1); rd;
+	pc := mbr;
+	1  := #1;
+	2048:= #8;				! Set up registers
+	63 := 2048*2048; 
+	63 := 63-1;
+	2048:= rotate8(2048);
+	32 := #31;
+	32 := 32+1;
+top:	mar := pc; rp:= pc-pc; rd; 
+	pc := pc+1; rd;				!	
+	ir := mbr; if z then go to halt;	! Instruction start		 
+	tir := band(ir, 63);			! decoding operand src	
+	mpc := mpc + tir + 1;
+	rp:= #8; go to endSrcDirect;		! {000, 000}		
+	rp:= #9; go to endSrcDirect;		! {000, 001}
+	rp:= #10; go to endSrcDirect;		! {000, 010}
+	rp:= #11; go to endSrcDirect;		! {000, 011}
+	rp:= #12; go to endSrcDirect;		! {000, 100}
+	rp:= #13; go to endSrcDirect;		! {000, 101}
+	rp:= #14; go to endSrcDirect;		! {000, 110}
+	rp:= #15; go to endSrcDirect;		! {000, 111}
+	rp:= #16; go to endSrcDirect;		! {001, 000}
+	rp:= #17; go to endSrcDirect;		! {001, 001}
+	rp:= #18; go to endSrcDirect;		! {001, 010}
+	rp:= #19; go to endSrcDirect;		! {001, 011}
+	rp:= #20; go to endSrcDirect;		! {001, 100}
+	rp:= #21; go to endSrcDirect;		! {001, 101}
+	rp:= #22; go to endSrcDirect;		! {001, 110}
+	rp:= #7 ; go to endSrcDirect;		! {001, 111}     
+	rp:=#16; go to ari;			! {010, 000} (a0)
+	rp:=#17; go to ari;	  		! {010, 001} (a1)
+	rp:=#18; go to ari;			! {010, 010} (a2)
+	rp:=#19; go to ari;	      		! {010, 011} (a3)
+	rp:=#20; go to ari;			! {010, 100} (a4)
+	rp:=#21; go to ari;			! {010, 101} (a5)
+	rp:=#22; go to ari;	  		! {010, 110} (a6)
+	rp:=#7;  go to ari;			! {010, 111} (a7)
+	rp:=#16; go to aripi;			! {011, 000} (a0)+
+	rp:=#17; go to aripi;	  		! {011, 001} (a1)+
+	rp:=#18; go to aripi;			! {011, 010} (a2)+
+	rp:=#19; go to aripi;	      		! {011, 011} (a3)+
+	rp:=#20; go to aripi;			! {011, 100} (a4)+
+	rp:=#21; go to aripi;			! {011, 101} (a5)+
+	rp:=#22; go to aripi;	  		! {011, 110} (a6)+
+	rp:=#7;  go to aripi;			! {011, 111} (a7)+
+	rp:=#16; go to aripd;			! {100, 000} -(a0)
+	rp:=#17; go to aripd;	  		! {100, 001} -(a1)
+	rp:=#18; go to aripd;			! {100, 010} -(a2)
+	rp:=#19; go to aripd;	      		! {100, 011} -(a3)
+	rp:=#20; go to aripd;			! {100, 100} -(a4)
+	rp:=#21; go to aripd;			! {100, 101} -(a5)
+	rp:=#22; go to aripd;	  		! {100, 110} -(a6)
+	rp:=#7;  go to aripd;			! {100, 111} -(a7)
+	rp:=#16; go to arid;			! {101, 000} d(a0)
+	rp:=#17; go to arid;			! {101, 001} d(a1)
+	rp:=#18; go to arid;			! {101, 010} d(a2)
+	rp:=#19; go to arid;			! {101, 011} d(a3)
+	rp:=#20; go to arid;			! {101, 100} d(a4)
+	rp:=#21; go to arid;			! {101, 101} d(a5)
+	rp:=#22; go to arid;			! {101, 110} d(a6)
+	rp:=#7 ; go to arid;			! {101, 111} d(a7)
+	go to top;				! {110, 000 --> 111}
+	go to top;				! No mode field is ever
+	go to top;				! 110, all illegal
+	go to top;
+	go to top;
+	go to top;
+	go to top;
+	go to top;
+	mar:= pc; rd; go to absadd;		! {111, 000}
+	go to top;				! No {111, 001}
+	go to pcid;				! pcid: {111, 010}
+	go to top;				! No {111, 011}
+	mar:= pc; rd; go to imd;		! imd: 	{111, 100}
+	go to top;				! No {111, 101}
+	go to top;				! No {111, 110}
+	go to top;				! No {111, 111}
+
+
+ari:	mar:= r[rp]; rd;
+	srcea:= r[rp]; rd;
+	src:= mbr; 
+	rp:=#0; go to endSrcBranch;
+aripi:	mar:= r[rp]; rd;			! 
+	srcea:= r[rp]; rd;
+	src:= mbr; 
+	r[rp]:= r[rp] + 1;			! Post Increment add reg
+	rp:=#0; go to endSrcBranch;		! aripi, must write, branch
+aripd:  r[rp]:= r[rp] -1;			! Predecrement add reg
+	mar:= r[rp]; rd;			! 
+	srcea:= r[rp]; rd;
+	src:= mbr; 
+	rp:=#0; go to endSrcBranch;		! aripd, must write, branch
+arid:   srcea:= r[rp]; mar:= pc; rd;
+	pc:= pc+1; rd;
+	srcea := srcea + mbr;
+	mar:= srcea; rd;
+	rp:= #0; rd;
+	src:= mbr; go to endSrcBranch;
+
+	
+absadd:	pc := pc +1; rd;
+	srcea := mbr;		! extension word
+	mar:= srcea; rd;
+	rp:= #0; rd;
+	src := mbr; go to endSrcBranch;
+
+pcid:	 mar:= pc; srcea:= pc; rd;
+	 pc:= pc+1; rd;
+	 srcea:= srcea + mbr;
+	 mar:= srcea; rd;
+	 rp:=#0; rd;
+	 src := mbr; go to endSrcBranch;
+
+imd:	 pc := pc+1; rd;
+	 src:= mbr; go to endSrcBranch;
+
+endSrcDirect: 	 src:= r[rp];					! N&Z b4 shifting
+endSrcBranch:    tir:= lshift(ir);  if n then go to 2Op;	! ir value in alu
+		 tir:= lshift(tir); if n then go to 2Op;	! LS1 (ir) in alu
+		 tir:= lshift(tir); if n then go to oneOp;	! LS2 (ir) in alu
+		 tir:= lshift(tir); if n then go to link; 	! LS3 (ir) in alu
+		 go to halt;
+
+oneOp:   tir:= rotate8(ir);  	       ! DECODE ONEOP
+	 mpc:= band(tir, 63) + mpc ;   ! 33 -> 53
+	 ;     		 !1
+	 ;		 !2
+	 ;		 !3
+	 ;		 !4
+	 ;		 !5
+	 ;		 !6
+	 ;		 !7
+	 ;		 !8
+	 ;		 !9
+	 ;		 !10
+	 ;		 !11
+	 ;		 !12
+	 ;		 !13
+	 ;		 !14
+	 ;		 !15
+	 ;		 !16
+	 ;		 !17
+	 ;		 !18
+	 ;		 !19
+	 ;		 !20
+	 ;		 !21
+	 ;		 !22
+	 ;		 !23
+	 ;		 !24
+	 ;		 !25
+	 ;		 !26
+	 ;		 !27
+	 ;		 !28
+	 ;		 !29
+	 ;		 !30
+	 ;		 !31
+	 ;		 !32			 
+clr:	 src:= #0; go to clr2;	 !33
+	 src:= inv(src) +#1; go to negb;
+	 src:= inv(src)    ; go to notb;
+	 mbr:= src; go to outnumb;
+	 getnum; go to getnumb;
+	 mbr:= src; go to outchb;
+	 getch;  go to getchb;
+rtd:	 mar:= sp;  rd; go to rtd2;
+unlk:	 sp:= src; go to unlk2;
+	 go to pea;
+jmp:	 pc:= srcea; go to top;
+jsr:	 sp:= sp-1 ; go to jsr2;
+	 go to beq;
+	 go to bne;
+	 go to blt;
+	 go to bgt;
+	 go to bge;
+	 go to ble;
+	 temp:=#1; go to pshbra;			
+	 temp:=#1; go to popreg;		
+clr2:	 alu:=rp; if z then go to srcwr; ! must write
+	 r[rp] := src; go to top;	  ! else don't write	 
+negb:	 alu:= rp; if z then go to srcwr;
+	 r[rp] := src; go to top;
+notb:	 alu:= rp; if z then go to srcwr;
+	 r[rp] := src; go to top;
+
+outnumb: outnum; go to top;
+getnumb: alu:= rp; if z then go to getnumbwr;
+	 r[rp]:= mbr; go to top;
+getnumbwr: mar:= srcea; wr;
+	   wr; go to top;	 
+outchb:	 outch; go to top;
+getchb:  alu:= rp; if z then go to getchbwr;
+	 r[rp]:= mbr; go to top;
+getchbwr: mar:= srcea; wr;
+	  wr; go to top;
+rtd2:	 sp:= sp+src+1; rd;
+	 pc:= mbr; go to top;	  
+unlk2:	 mar:= sp ; rd;
+	 sp:= sp+1; rd;
+	 src:= mbr;
+	 alu:= rp; if z then go to srcwr;
+	 r[rp] := src; go to top;
+pea:	 sp:= sp -1; 
+	 mbr:= srcea;
+	 mar:= sp; wr;
+	 wr; go to top;	 
+jsr2:	 mar:= sp;
+	 mbr:= pc; wr;
+	 pc:= srcea; wr; go to top;
+beq:	 alu:=dst; if z then go to beq2;
+	 go to top;
+beq2:	 pc:= srcea; go to top;
+bne:	 alu:=dst; if z then go to top;
+	 pc:= srcea; go to top;
+blt:	 alu:= dst; if n then go to blt2;
+	 go to top;
+blt2:	 pc:= srcea; go to top;
+bgt:	 alu:= dst; if n then go to top;
+	 alu:= dst; if z then go to top;
+	 pc:= srcea; go to top;
+bge:	 alu:=dst; if n then go to top;
+	 pc:= srcea; go to top;
+ble:	 alu:= dst; if n then go to ble2;
+	 alu:= dst; if z then go to ble2;
+	 go to top;
+ble2:	 pc:= srcea; go to top;
+
+
+
+
+
+
+pshbra:	 mpc:= mpc + temp;	
+ 	 rp:= #8;  go to pshing;		
+	 rp:= #9;  go to pshing;		
+	 rp:= #10; go to pshing;		
+	 rp:= #11; go to pshing;		
+	 rp:= #12; go to pshing;		
+	 rp:= #13; go to pshing;		
+	 rp:= #14; go to pshing;		
+	 rp:= #15; go to pshing;		
+	 rp:= #16; go to pshing;		
+	 rp:= #17; go to pshing;		
+	 rp:= #18; go to pshing;		
+	 rp:= #19; go to pshing;		
+	 rp:= #20; go to pshing;		
+	 rp:= #21; go to pshing;		
+	 rp:= #22; go to pshing; 	
+	 rp:= #7 ; go to pshing;	   
+	 go to top; ! done
+pshing:	 src:= lshift(src); if n then go to psh2;
+	 go to pshinc;
+psh2:	 sp:= sp -1;
+	 mar:= sp;
+	 mbr:= r[rp]; wr;
+	 wr; go to pshinc;
+pshinc:	 temp:= temp + 1; go to pshbra;
+
+popreg:	 temp2:=#1;
+popbra:	 mpc:= mpc+temp;	 
+	 rp:= #7;  go to poping;		
+	 rp:= #22;  go to poping;		
+	 rp:= #21; go to poping;		
+	 rp:= #20; go to poping;		
+	 rp:= #19; go to poping;		
+	 rp:= #18; go to poping;		
+	 rp:= #17; go to poping;		
+	 rp:= #16; go to poping;		
+	 rp:= #15; go to poping;		
+	 rp:= #14; go to poping;		
+	 rp:= #13; go to poping;		
+	 rp:= #12; go to poping;		
+	 rp:= #11; go to poping;		
+	 rp:= #10; go to poping;		
+	 rp:= #9; go to poping; 	
+	 rp:= #8; go to poping;
+	 go to top; ! done
+poping:	 alu:= band(src, temp2); if z then go to popinc;
+poping2: mar:= sp; rd;
+	 sp:= sp + 1; rd;
+	 r[rp]:= mbr;  go to popinc;
+popinc:	 temp:= temp + 1; 
+	 temp2:= lshift(temp2); go to popbra;
+
+
+2Op:	tir:= rshift(ir);			! Shift L 1
+	tir:= tir/32 + #1;			! Shift L 5, add 1
+	mpc := band(tir, 63) + mpc;		! Branch!
+	rp:= #8; go to endDstDirect;		! {000, 000}		
+	rp:= #9; go to endDstDirect;		! {000, 001}
+	rp:= #10; go to endDstDirect;		! {000, 010}
+	rp:= #11; go to endDstDirect;		! {000, 011}
+	rp:= #12; go to endDstDirect;		! {000, 100}
+	rp:= #13; go to endDstDirect;		! {000, 101}
+	rp:= #14; go to endDstDirect;		! {000, 110}
+	rp:= #15; go to endDstDirect;		! {000, 111}
+	rp:= #16; go to endDstDirect;		! {001, 000}
+	rp:= #17; go to endDstDirect;		! {001, 001}
+	rp:= #18; go to endDstDirect;		! {001, 010}
+	rp:= #19; go to endDstDirect;		! {001, 011}
+	rp:= #20; go to endDstDirect;		! {001, 100}
+	rp:= #21; go to endDstDirect;		! {001, 101}
+	rp:= #22; go to endDstDirect;		! {001, 110}
+	rp:= #7 ; go to endDstDirect;		! {001, 111}     
+	rp:=#16; go to ari2;			! {010, 000} (a0)
+	rp:=#17; go to ari2; 		  	! {010, 001} (a1)
+	rp:=#18; go to ari2;			! {010, 010} (a2)
+	rp:=#19; go to ari2;      		! {010, 011} (a3)
+	rp:=#20; go to ari2;			! {010, 100} (a4)
+	rp:=#21; go to ari2;			! {010, 101} (a5)
+	rp:=#22; go to ari2;  			! {010, 110} (a6)
+	rp:=#7;  go to ari2;			! {010, 111} (a7)
+	rp:=#16; go to aripi2;			! {011, 000} (a0)+
+	rp:=#17; go to aripi2;	  		! {011, 001} (a1)+
+	rp:=#18; go to aripi2;			! {011, 010} (a2)+
+	rp:=#19; go to aripi2;	      		! {011, 011} (a3)+
+	rp:=#20; go to aripi2;			! {011, 100} (a4)+
+	rp:=#21; go to aripi2;			! {011, 101} (a5)+
+	rp:=#22; go to aripi2;	  		! {011, 110} (a6)+
+	rp:=#7;  go to aripi2;			! {011, 111} (a7)+
+	rp:=#16; go to aripd2;			! {100, 000} -(a0)
+	rp:=#17; go to aripd2;	  		! {100, 001} -(a1)
+	rp:=#18; go to aripd2;			! {100, 010} -(a2)
+	rp:=#19; go to aripd2;	      		! {100, 011} -(a3)
+	rp:=#20; go to aripd2;			! {100, 100} -(a4)
+	rp:=#21; go to aripd2;			! {100, 101} -(a5)
+	rp:=#22; go to aripd2;	  		! {100, 110} -(a6)
+	rp:=#7;  go to aripd2;			! {100, 111} -(a7)
+	rp:=#16; go to arid2;			! {101, 000} d(a0)
+	rp:=#17; go to arid2;			! {101, 001} d(a1)
+	rp:=#18; go to arid2;			! {101, 010} d(a2)
+	rp:=#19; go to arid2;			! {101, 011} d(a3)
+	rp:=#20; go to arid2;			! {101, 100} d(a4)
+	rp:=#21; go to arid2;			! {101, 101} d(a5)
+	rp:=#22; go to arid2;			! {101, 110} d(a6)
+	rp:=#7 ; go to arid2;			! {101, 111} d(a7)
+	go to top;				! {110, 000 --> 111}
+	go to top;				! No mode field is ever
+	go to top;				! 110
+	go to top;
+	go to top;
+	go to top;
+	go to top;
+	go to top;
+	mar:= pc; rd; go to absadd2;		! {111, 000}
+	go to top;				! No {111, 001}
+	go to pcid2;				! pcid: {111, 010}
+	go to top;				! No {111, 011}
+	mar:= pc; rd; go to imd2;		! imd: 	{111, 100}
+	go to top;				! No {111, 101}
+	go to top;				! No {111, 110}
+	go to top;				! No {111, 111}
+
+
+ari2:  	mar:= r[rp]; rd;
+	dstea:= r[rp]; rd;
+	dst:= mbr; 
+	rp:=#0; go to endDstBranch;
+
+
+aripi2:	mar:= r[rp]; rd;			! 
+	dstea:= r[rp]; rd;
+	dst:= mbr; 
+	r[rp]:= r[rp] + 1;			! Post Increment add reg
+	rp:=#0; go to endDstBranch;		! aripi2, must write, branch
+aripd2: r[rp]:= r[rp] -1;			! Predecrement add reg
+	mar:= r[rp]; rd;			! 
+	dstea:= r[rp]; rd;
+	dst:= mbr; 
+	rp:=#0; go to endDstBranch;		! aripd2, must write, branch
+arid2:  dstea:= r[rp]; mar := pc; rd;
+	pc:= pc+1; rd;
+	dstea := dstea + mbr;
+	mar:= dstea; rd;
+	rp:= #0 ;rd;
+	dst:= mbr; go to endDstBranch;
+	
+absadd2:pc := pc +1; rd;
+	dstea := mbr;		! extension word
+	mar:= dstea; rd;
+	rp:=#0;rd;
+	dst := mbr; go to endDstBranch;
+
+pcid2:	 mar:= pc; dstea:= pc; rd;
+	 pc:= pc+1; rd;
+	 dstea:= dstea + mbr;
+	 mar:= dstea; rd;
+	 rp:=#0;rd;
+	 dst := mbr; go to endDstBranch;
+
+imd2:	 pc := pc+1; rd;
+	 dst:= mbr; go to endDstBranch;
+
+endDstDirect:    dst:= r[rp]; 
+endDstBranch: 	 tir:= rshift(ir);	! Shift R 1, discard signed bit
+		 tir:= lshift(tir/2048);! Shift R 10, 2^11 = 2048
+		 mpc:= tir+mpc;		! Branch the 2 Ops
+		 ;
+		 ;
+		 ;
+		 ;
+		 ;
+		 ;
+		 ;
+move:	 	 alu:= rp; if z then go to movewr;
+	 	 r[rp] := src; go to top;  		
+add:	 	 alu:= rp; if z then go to addwr; 
+	 	 r[rp]:= src + dst; go to top; 
+sub:		 alu:= rp; if z then go to subwr;
+	 	 r[rp]:=dst-src; go to top;
+cmp:		 dst:= dst-src;
+		 go to top;
+muls:		 alu:= rp; if z then go to mulswr; 
+		 r[rp]:= src*dst; go to top;
+divs:	 	 alu:= rp; if z then go to divswr;
+	 	 r[rp]:= dst/src; go to top;
+and:	 	 alu:= rp; if z then go to andwr;
+	 	 r[rp] := band(src, dst); go to top;
+or:	 	 alu:= rp; if z then go to orwr;
+		 r[rp] := bor(src, dst); go to top;
+eor:	 	 temp := bor (src, dst);
+	 	 temp2:= band(src, dst); go to eor2;
+lea:		 alu:= rp; if z then go to leawr; 
+		 r[rp]:=srcea; go to top;
+asl:		 temp:= #15; go to asl2;
+		 ;	  
+asr:		 temp:=#15;  go to asr2;
+movewr:	 mbr := src; 
+	 mar:= dstea; wr;
+	 wr; go to top;
+addwr:	 mbr:= src + dst;
+	 mar:= dstea; wr;
+	 wr; go to top; 
+subwr:	 mbr:= dst-src;
+	 mar:= dstea; wr;
+	 wr; go to top;
+mulswr:	 mbr:= src*dst;
+	 mar:= dstea; wr;
+	 wr; go to top; 	  
+divswr:	 mbr:= dst/src;
+	 mar:= dstea; wr;
+	 wr; go to top;
+andwr:	 mbr := band(src, dst); 
+	 mar:= dstea; wr;
+	 wr; go to top;
+orwr:	 mbr := bor(src, dst); 
+	 mar:= dstea; wr;
+	 wr; go to top;
+eor2:	 temp2:= inv(temp2);
+	 alu:= rp; if z then go to eorwr;
+	 r[rp] := band(temp2, temp); go to top;
+eorwr:	 mbr := band(temp2, temp);
+	 mar:= dstea; wr;
+	 wr; go to top;          
+leawr:	 mbr:= srcea;
+	 mar:= dstea; wr;
+	 wr; go to top;
+
+
+asl2:	 alu:= temp-src; if n then go to asl3;
+	 go to asl4;
+asl3:	 dst:= #0; go to aslend;
+asl4:	 mpc:= mpc+src+1;
+	 go to top;		
+LS1:	 dst:= lshift(dst);     go to aslend;	
+LS2:	 dst:= lshift(dst+dst);	go to aslend;
+LS3:	 dst:= lshift(dst+dst); go to LS1;
+LS4:	 dst:= lshift(dst+dst); go to LS2;
+LS5:	 dst:= dst*32;		go to aslend;
+LS6:	 dst:= dst*32; 		go to LS1;
+LS7:	 dst:= dst*32;		go to LS2;
+LS8:	 dst:= dst*32;		go to LS3;
+LS9:	 dst:= dst*32;		go to LS4;
+LS10:	 dst:= dst*32;		go to LS5;
+LS11:	 dst:= dst*32;		go to LS6;
+LS12:	 dst:= dst*32;		go to LS7;
+LS13:	 dst:= dst*32;		go to LS8;
+LS14:	 dst:= dst*32;		go to LS9;
+LS15:	 dst:= dst*32;		go to LS10;	
+aslend:  alu:= rp; if z then go to aslwr;
+	 r[rp]:= dst; go to top;
+aslwr:	 mbr := dst;
+	 mar:= dstea; wr;
+	 wr; go to top; 	 
+
+asr2:	 temp2:= #0;
+	 alu:= temp-src; if  n then go to asr3;
+	 go to asr4;
+asr3:	 alu:= dst; if n then go to asr5;
+	 dst:= #0; go to asrend;
+asr5:	 dst:= inv(temp2); go to asrend;
+asr4:	 alu:= inv(dst); if n then go to asr6;
+	 dst:= inv(dst); ! neg case positive
+	 temp2:= #1;	 ! 
+asr6:	 mpc:= mpc+src+1;
+	 go to top;		
+RS1:	 dst:= rshift(dst);     go to asrend;	
+RS2:	 dst:= rshift(dst);	go to RS1;
+RS3:	 dst:= rshift(dst);	go to RS2;
+RS4:	 dst:= rshift(dst);     go to RS3;
+RS5:	 dst:= dst/32;		go to asrend;
+RS6:	 dst:= dst/32; 		go to RS1;
+RS7:	 dst:= dst/32;		go to RS2;
+RS8:	 dst:= dst/32;		go to RS3;
+RS9:	 dst:= dst/32;		go to RS4;
+RS10:	 dst:= dst/32;		go to RS5;
+RS11:	 dst:= dst/32;		go to RS6;
+RS12:	 dst:= dst/32;		go to RS7;
+RS13:	 dst:= dst/32;		go to RS8;
+RS14:	 dst:= dst/32;		go to RS9;
+RS15:	 dst:= dst/32;		go to RS10;	
+asrend:  alu:= temp2; if z then go to asrend2;	! If Originally not neg
+	       	          	 		! don't need to reinvert
+	 dst:= inv(dst);			! re invert, was neg b4
+asrend2: alu:= rp; if z then go to asrwr;
+	 r[rp]:= dst; go to top;
+asrwr:	 mbr := dst;
+	 mar:= dstea; wr;
+	 wr; go to top;
+
+link: 	 tir:= rshift(ir/32); 	      !Shift R 6
+	 temp:=band(tir, 63) + 1;
+	 mpc:= mpc + temp; ! 1-> 8
+	 rp:= #16; go to link2;
+	 rp:= #17; go to link2;
+	 rp:= #18; go to link2;
+	 rp:= #19; go to link2;
+	 rp:= #20; go to link2;
+	 rp:= #21; go to link2;
+	 rp:= #22; go to link2;
+	 rp:= #7;  go to link2;
+link2:	 sp:= sp-1;
+	 mar:= sp;
+	 mbr:= r[rp]; wr;
+	 r[rp]:= sp;  wr;
+	 sp:= sp+src; go to top;
+
+
+srcwr:	 mar:= srcea;
+	 mbr:= src; wr;
+	 wr; go to top;
+
+halt: 	 go to halt;
+end

@@ -1,0 +1,9 @@
+package project;
+
+public class Knight implements Piece {
+
+	public double transitionProb(int startStateId, int endStateId) {
+		return 0;
+	}
+
+}

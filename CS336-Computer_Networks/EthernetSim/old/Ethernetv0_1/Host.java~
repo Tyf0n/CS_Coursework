@@ -1,0 +1,185 @@
+package Ethernet;
+import java.util.UUID;
+import java.util.HashMap;
+import java.lang.Math;
+import java.util.Random;
+
+public class Host {
+
+    int hostId;	
+    Transmitter tstate;
+    Receiver rstate;
+    SimulatedTime stime;
+    Random r = new Random();
+    int transAttempt = 0;
+    int processTime;
+    
+    int packetSize;
+    HashMap<Integer, SimulatedEvent> upcomingEvents;
+    int position; // define this to be the time units from the left-most edge
+    // of the network
+
+    public static double PREAMBLE_TIME = 64.0;
+    public static double GAP_TIME = 96.0;
+    public static double JAMMING_TIME = 32.0;
+
+
+    public Host(SimulatedTime parentTime, int pSize, int curPos, int inID)
+    {
+	hostId = inID;
+
+	tstate = PREPARING;
+	rstate = IDLE;
+
+	stime = parentTime;
+
+	packetSize = pSize;
+
+	position = curPos;
+	processTime = 10;//Should be random later
+    }
+
+
+    public void AddFutureEvent(SimulatedEvent simEvt)
+    {
+	upcomingEvents.put(simEvt.ID, simEvt);
+    }
+
+    /*
+      whenever you need to cycle through all events that are in the future
+      call
+
+      while(upcomingEvents.values().Iterator().hasNext())
+      {
+      }
+     */
+
+
+
+
+    public void scheduleMyEvent(SimEvtType type, double startoffset, double dur){
+	id = UUID.randomUUID();
+	currentTime = stime.getCurrentTime();
+	SimulatedEvent event = new SimulatedEvent(id, type, currentTime + startoffset, dur, this.position);
+	AddFutureEvent(event);
+	stime.schedule(event);	
+    }
+
+	public void reactToEvent(SimulatedEvent e) {
+	    int currentTime;
+	    UUID id;
+            int relpos = Math.abs(this.position - e.origin);
+	    switch (rstate) {
+			case BUSY:
+				if (e.getEventType() == e.SimEvtType.JAMMING_DONE ||
+				    e.getEventType() == e.SimEvtType.TRANS_DONE )  {			    
+					
+
+				    if (relpos == 0}{
+					rstate = Receiver.GAP;
+					scheduleMyEvent(e.SimEvtType.GAP_DONE, GAP_TIME, 0);
+				    }
+				    scheduleMyEvent(e.SimEvtType.R_NOW_BUSY,relpos , 0);
+				       
+				    
+				    rstate = Receiver.GAP;
+				}
+			case GAP:
+				if (e.getEventType() == e.SimEvtType.GAP_DONE)  {
+					
+				    scheduleMyEvent(e.EvtType.R_NOW_IDLE, 0, 0);
+				    rstate = Receiver.IDLE;
+				}
+			case IDLE:				
+
+				if (e.getEventType() == e.SimEvtType.JAMMING_START ||
+				    e.getEventType() == e.SimEvtType.PREAMBLE_START )  {
+				     
+				    if (relpos == 0}{
+					rstate = Receiver.BUSY;
+				    }
+				    scheduleMyEvent(e.SimEvtType.R_NOW_BUSY,relpos , 0);
+				}
+		
+	    }
+	    switch (tstate) {
+			case EAGER: 
+				if (e.getEventType() == e.SimEvtType.R_NOW_IDLE ) {
+				    scheduleMyEvent(e.SimEvtType.PREAMBLE_START, 0, 0);
+				    scheduleMyEvent(e.SimEvtType.PREAMBLE_DONE, PREAMBLE_TIME, 0);
+				    tstate = Transmitter.PREAMBLE;
+				}
+			case PREAMBLE:
+				if (e.getEventType() == e.SimEvtType.PREAMBLE_DONE) {
+					if (rstate == Receiever.IDLE) {
+					    scheduleMyEvent(e.SimEvtType.SIGNAL_START, 0, 0);
+					    scheduleMyEvent(e.SimEvtType.SIGNAL_DONE, packetsize, 0);
+					    tstate = Transmitter.SENDING;
+					} else {
+					    scheduleMyEvent(e.SimEvtType.JAMMING_START, 0, 0);
+					    scheduleMyEvent(e.SimEvtType.JAMMING_DONE, JAMMING_TIME, 0);
+					    tstate = Transmitter.JAMMING;
+					}
+				}
+			case JAMMING:
+				if (e.getEventType() == e.SimEvtType.JAMMING_DONE) {
+				    if (transAttempt <= 10) {
+				   	 scheduleMyEvent(e.SimEvtType.BACKOFF_DONE,((double)r.nextInt(Math.pow(2.0, transAttempt))), 0);
+				    } else {
+					 scheduleMyEvent(e.SimEvtType.BACKOFF_DONE,((double)r.nextInt(Math.pow(2.0, 10))), 0);
+				    }
+				    transAttempt++;
+				    tstate = Transmitter.WAITING;
+				}
+			case SENDING:
+				if (e.getEventType() == e.SimEvtType.R_NOW_BUSY) {
+
+					scheduleMyEvent(e.SimEvtType.JAMMING_START, 0, 0);
+					scheduleMyEvent(e.SimEvtType.JAMMING_DONE, JAMMING_TIME, 0);
+					tstate = Transmitter.JAMMING;
+
+				} else if (e.getEventType() == e.SimEvtType.SIGNAL_DONE) {
+
+				        scheduleMyEvent(e.SimEvtType.PACKET_READY, processTime, 0);
+				        tstate = Transmitter.PREPARING;					
+				}
+			case PREPARING:
+			       if (e.getEventType() == e.SimEvtType.PACKET_READY) ) {
+					if (rstate == Receiever.IDLE) {
+					     scheduleMyEvent(e.SimEvtType.PREAMBLE_START, 0, 0);
+					     scheduleMyEvent(e.SimEvtType.PREAMBLE_DONE, PREAMBLE_TIME, 0);
+					     tstate = Transmitter.PREAMBLE;
+					} else {
+						tstate = Transmitter.EAGER;
+					}
+				}
+			case WAITING:
+				if (transAttempt == 15) {
+				    // Packet is Aborted
+				    transAttempt =0;
+				    tstate = Transmitter.PREPARING;
+				} else if (e.getEventType() == e.SimEvtType.BACKOFF_DONE) {
+					if (rstate == Receiever.IDLE) {
+					     scheduleMyEvent(e.SimEvtType.PREAMBLE_START, 0, 0);
+					     scheduleMyEvent(e.SimEvtType.PREAMBLE_DONE, PREAMBLE_TIME, 0);
+					     tstate = Transmitter.PREAMBLE;
+					} else {
+						tstate = Transmitter.EAGER;
+					}
+				}
+		}
+
+			
+		
+	}
+
+
+
+	public enum Transmitter {
+		EAGER, PREPARING, PREAMBLE, SENDING, JAMMING, WAITING
+	}
+
+	public enum Receiver {
+		BUSY, GAP, IDLE
+	}
+}

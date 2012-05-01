@@ -1,0 +1,154 @@
+package project;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Random;
+import java.util.Scanner;
+
+
+
+public class ImitationSim {
+	private static final boolean RANDOM_START = false;
+	private ChessBoard board;
+	private Piece[] mentors;
+	private Piece[] observers;
+	private PieceType mentorType;
+	private PieceType observerType;
+	private Random r = new Random();
+	
+	public ImitationSim(String boardFile, PieceType m, PieceType o){
+		board = new ChessBoard(boardFile, m, o);
+	}
+	
+	public ChessBoard getBoard(){
+		return board;
+	}
+	
+	public enum PieceType{
+		KING, KNIGHT;
+	}
+	
+	public static void main (String [] args){
+		//Parsing inputs to the Simulation.
+		Scanner in = new Scanner(System.in);
+	    int numAgents, numEpisodes;
+	    PieceType m, o;
+	    System.out.print("Number of Agents: ");
+        numAgents = in.nextInt();
+        System.out.print("Number of Episodes: ");
+        numEpisodes = in.nextInt();
+        /*
+        System.out.println("Mentor type (king = 'ki', knight = 'kn': ");
+        String mType = in.nextLine().toLowerCase();
+        if (mType.equalsIgnoreCase("kn")){
+        	m = PieceType.KNIGHT;
+        } else {
+        	m = PieceType.KING;
+        }        
+        System.out.println("Observer type (king = 'ki', knight = 'kn': ");
+        String oType = in.nextLine().toLowerCase();
+        if (oType.equalsIgnoreCase("kn")){
+        	o = PieceType.KNIGHT;
+        } else {
+        	o = PieceType.KING;
+        }
+        in.close();
+        */
+        m = PieceType.KING;
+        o = PieceType.KING;
+        ImitationSim sim = new ImitationSim(
+        		"/host/Users/Nathaniel/Documents/CollegeWork/CSCI373/Final/Imitation/src/project/board.txt", m, o);
+	    
+	    sim.mentors = new Piece[numAgents];	   
+	    sim.observers = new Piece[numAgents];
+	    
+	    //Start running Simulation
+	    System.out.print("Starting Simulation ");
+	    if (RANDOM_START){
+	    	System.out.println("with a Random start state for an episode");
+	    } else {
+	    	System.out.println("with (0,0) as the start state for an episode");
+	    }
+	    System.out.println("World: " + sim.getBoard());
+	    double mentorReward = 0;
+	    double observerReward = 0;
+	    
+	    //Set up the Mentor pieces
+	    boolean isObserver = false;
+	    for (int i = 0; i < sim.mentors.length; i++){
+	    	if (m == PieceType.KING){
+	    	 	sim.mentors[i] = new King(sim.getBoard(), isObserver, null); 
+	    	} else {
+	    		sim.mentors[i] = new Knight(sim.getBoard(), isObserver, null);
+	    	}
+	    }	    
+	    
+	    //Run Episodes on Mentors
+    	System.out.println("Mentor Learning: ");
+	    for (int e = 0; e < numEpisodes; e++){
+	    	for (int i = 0; i < sim.mentors.length; i++){
+	    		mentorReward += sim.runEpisode(sim.mentors[i]);
+	    	}
+	    	System.out.println("Episode: " + (e+1) + " Average Reward: " + mentorReward/sim.mentors.length);
+	    	mentorReward = 0;
+	    }
+	    
+	    //Set up the Observers
+	    isObserver = true;
+	    for (int i = 0; i < sim.observers.length; i++){
+	    	int mentorIndex = sim.r.nextInt(sim.mentors.length);
+	    	if (m == PieceType.KING){
+	    	 	sim.observers[i] = new King(sim.getBoard(), isObserver, sim.mentors[mentorIndex]); 
+	    	} else {
+	    		sim.observers[i] = new Knight(sim.getBoard(), isObserver, sim.mentors[mentorIndex]);
+	    	}
+	    }
+	    
+	    //Run Episodes on the Observers
+    	System.out.println("Observer Learning:");
+	    for (int e = 0; e < numEpisodes; e++){
+	    	for (int i = 0; i < sim.observers.length; i++){
+	    		observerReward += sim.runEpisode(sim.observers[i]);
+	    	}
+	    	System.out.println("Episode: " + (e+1) + " Average Reward: " + observerReward/sim.observers.length);
+	    	observerReward = 0;
+	    }
+	    System.out.println("End of Simulation");
+	    
+	}
+
+	private double runEpisode(Piece piece) {
+		//Start the Piece at a random position:
+		double reward = 0.0;
+		Coordinate pos;
+		PieceAction action;
+		int s, t;
+		if (RANDOM_START){
+			pos = new Coordinate(r.nextInt(this.getBoard().sizeX()), r.nextInt(this.getBoard().sizeY()));
+		} else {
+			pos = new Coordinate(0, 0);
+		}
+		piece.setPosition(pos);
+		//System.out.print("Start Ep: " + piece.getPosition() + ", ");
+		while(!board.isTerminalState(board.getStateId(piece.getPosition().getX(), piece.getPosition().getY()))){
+			//reward+= -0.05;
+			int bA = piece.getNextAction();
+			if (piece.isObserver()){
+				action = board.getObserverActions()[bA];
+			} else{
+				action = board.getMentorActions()[bA];
+			}
+			s = board.getStateId(piece.getPosition().getX(), piece.getPosition().getY());
+			piece.setPosition(board.nextState(piece.getPosition(), action));
+			t = board.getStateId(piece.getPosition().getX(), piece.getPosition().getY());
+			//System.out.print(piece.getPosition() + ", ");
+			piece.updateTally(s, bA, t);
+			piece.updateQFunction(s, bA, t);
+		}
+		reward += board.getReward(board.getStateId(piece.getPosition().getX(), piece.getPosition().getX()));
+		//System.out.println("End Ep with r = " + reward);
+		return reward;
+	}
+
+}

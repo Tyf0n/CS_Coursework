@@ -1,0 +1,10 @@
+package project;
+
+import mdps.QValueFunction;
+
+public abstract class Piece {
+	
+	public abstract double transitionProb(int startStateId, int endStateId);
+	
+
+}

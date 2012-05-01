@@ -1,0 +1,27 @@
+6
+simonkatu
+mannerheimvagen
+kansakoulukatu
+arkadiagatan
+kampinkuja
+lapuankatu
+7
+arkadiagatan kansakoulukatu
+kansakoulukatu simonkatu
+arkadiagatan simonkatu
+mannerheimvagen lapuankatu
+simonkatu mannerheimvagen
+kampinkuja simonkatu
+lapuankatu kampinkuja
+5
+loktorget
+semaforbron
+klockbron
+stinsgatan
+kirjurinkatu
+4
+loktorget kirjurinkatu
+semaforbron kirjurinkatu
+kirjurinkatu klockbron
+stinsgatan kirjurinkatu
+0

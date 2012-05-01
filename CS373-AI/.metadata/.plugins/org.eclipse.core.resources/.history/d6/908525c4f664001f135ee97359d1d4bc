@@ -1,0 +1,332 @@
+/* Nathaniel Lim
+ * CS373 - Final Project
+ * May 18, 2010
+ * Implicit Imitation 
+ */
+
+package project;
+import java.util.Random;
+
+
+public class Piece {	
+	
+	protected boolean isObserver;
+	protected Piece mentor;
+	protected ChessBoard world;
+	private Coordinate pos;
+	public int [][] tally;
+	public int [][][] actionTally;
+	private double [][] qMap;
+	public double [] vMap;
+	private double [] visibleQMap;
+	private final double GAMMA = 0.9;
+	private final double ALPHA = 0.6;
+	private double EPSILON = 0.05;
+	private int MENTOR_ACTION_INDEX = -1;
+	Random r = new Random();
+	private int actionsTaken = 0;	
+	protected PieceAction[] actions;
+	
+	public Coordinate getPosition(){
+		return pos;
+	}
+	
+	public void setPosition(Coordinate p){
+		this.pos = p;
+	}
+	
+	public void setMentor(Piece m){
+		if (isObserver){
+			this.mentor = m;
+		}
+	}
+	
+	public Piece getMentor(){
+		return mentor;
+	}
+	
+	public Piece (ChessBoard world, boolean isObserver, PieceAction[] actions, Piece mentor){
+		this.mentor = mentor;
+		this.world = world;
+		this.isObserver = isObserver;
+		this.actions = actions;
+		this.tally = new int[this.world.numStates()][this.world.numStates()];
+		this.actionTally = new int[this.world.numStates()][actions.length][this.world.numStates()];
+		this.vMap = new double [this.world.numStates()];
+		this.visibleQMap = new double[this.world.numStates()];
+		//For Observers, the action set is augmented by a_m, the unknown
+		if (isObserver){
+			this.qMap = new double[this.world.numStates()][actions.length+1];
+			this.MENTOR_ACTION_INDEX = actions.length;
+			//Using this experiences of the  mentor to fill in the qFunction for the unknown mentor action;
+			for (int s = 0; s < world.numStates(); s++){
+				qMap[s][MENTOR_ACTION_INDEX] = mentor.visibleQMap[s];
+			}
+		} else {
+			this.qMap = new double[this.world.numStates()][actions.length];
+		}
+	}	
+	
+	//This method will give a observer the probability transition function
+	//of the mentor
+	public double transitionProb(int s, int t){
+		int totalTransitionsFromS = 0;
+		for (int i = 0; i < tally[s].length; i++){
+			totalTransitionsFromS += tally[s][i];
+		}
+//		if(totalTransitionsFromS == 0){
+//			return 1.0/actions.length;
+//		}
+		//System.out.println("" + tally[s][t] + "/" + totalTransitionsFromS);
+		return ((double)tally[s][t])/((double)totalTransitionsFromS);
+	}
+	
+	//This method will give an agents, its own probability transition function
+	//The probability that the agent transitions to t when the agent is in state s and chooses action a
+	private double transitionProb(int s, int a, int t){
+		int total_S_A = 0;
+		for (int j = 0; j < actionTally[s][a].length; j++){
+			total_S_A += actionTally[s][a][j];
+		}
+		if(total_S_A == 0){
+			return 0.0;
+		}
+		//System.out.println("" + actionTally[s][a][t] + "/" + total_S_A);
+		return ((double)actionTally[s][a][t])/((double)total_S_A);
+	}
+	
+
+	public boolean isObserver() {
+		return isObserver;
+	}
+
+	
+	/*
+	 * Implements Both Q Learning and Bellman-Backups
+	 * 
+	 */
+	public int getNextAction() {
+		double mentorExpectation = Double.NEGATIVE_INFINITY;
+		double ownExpectation = Double.NEGATIVE_INFINITY;
+		double bestExpectation;
+		double bestActionValue;
+		int bestAction;
+		int s = world.getStateId(pos.getX(), pos.getY());
+		actionsTaken++;
+		
+		//Decrement EPSILON over every action taken
+		if(EPSILON > 0.0){
+			EPSILON-=0.001;
+		}
+		
+		if (world.QLEARNING){						
+			//Epsilon Greedy Policy, for Q-Learning
+			if (r.nextDouble() < EPSILON) {
+				return r.nextInt(actions.length);
+			} else {
+				//Do the best action, over Q(s, a)
+				bestActionValue = Double.NEGATIVE_INFINITY;
+				bestAction = 0;
+				for (int a = 0; a < actions.length; a++) {
+					if (qMap[s][a] > bestActionValue) {
+						bestActionValue = qMap[s][a];
+						bestAction = a;
+					}
+				}
+				//If the Piece is an observer, the Mentor's Unknown action might be best.
+				if(isObserver()){
+					int KLDa = kldMinimizer(s);					
+					if (qMap[s][MENTOR_ACTION_INDEX] > qMap[s][bestAction] && KLDa != -1 && actionsTaken > 20){							
+						bestAction = KLDa;						
+					}
+				}				
+			}
+			return bestAction;			
+		} else {
+			System.out.println("In State " + getPosition()); 
+			//Augmented Bellmann Backup (Epsilon Greedy Policy)
+			if (r.nextDouble() < EPSILON) {
+				return r.nextInt(actions.length);
+			} else {
+				//First find the best action to take, given own model
+				bestAction = 0;
+				ownExpectation = Double.NEGATIVE_INFINITY;
+				for (int a = 0; a < actions.length; a++){
+					double sum = 0.0;
+					for (int t = 0; t < world.numStates(); t++){
+						sum += transitionProb(s, a, t)*vMap[t];
+					}
+					System.out.println("Action" + actions[bestAction].dx() + ", " +actions[bestAction].dy() + ") has expectation: " + sum);
+					if (sum > ownExpectation){
+						ownExpectation = sum;
+						bestAction = a;
+					}
+				}
+				bestExpectation = ownExpectation;
+				boolean mentorTold = false;
+				if(isObserver){
+					//Use the mentors information
+					mentorExpectation = 0.0;
+					for (int t = 0; t < world.numStates(); t++){
+						mentorExpectation += mentor.transitionProb(s, t)*vMap[t];
+					}
+					//Find own action that minimizes the kL-Distance:
+					int kld = kldMinimizer(s);
+					if (mentorExpectation > bestExpectation && kld != -1){							
+						bestExpectation = mentorExpectation;
+						bestAction = kld;		
+						mentorTold = true;
+					}					
+				}
+				updateVFunction(s,bestAction, bestExpectation);
+				printStateValues();
+				System.out.println("In State " + getPosition() + " want to take (" + actions[bestAction].dx() + ", " +actions[bestAction].dy() + ")");
+				if(mentorTold){
+					System.out.println("Because mentor told me");
+				}
+				return bestAction;			
+			}
+			
+		}		
+	}
+	
+	public static double klDistance (double[] vect1, double [] vect2){
+		double sum = 0.0;
+		for(int t = 0; t < vect1.length; t++){					
+			double p1 = vect1[t];
+			double p2 = vect2[t];
+			System.out.print("( " +p1+ ", " +p2+ ") ,");
+			//sum += (0.5)*(p1* Math.log(p1/p2) + p2* Math.log(p2/p1));
+			if (p2 == 0){
+				p2 = 0.00001;				
+			} 
+			sum+= -p1*Math.log(p2);
+			System.out.println("Sum so far:" + sum);
+		}
+		
+		return sum;		
+	}
+	
+	public static void main (String [] args){
+		double [] v1 = {0, 0, 0, .3, .7};
+		double [] v2 = {0, 0, 0, .3, .7};
+		System.out.println("KLDistance: " + klDistance(v1, v2));
+		double [] v3 = {.3, .7, 0, 0, 0};
+		double [] v4 = {0, 0, 0, .3, .7};
+		System.out.println("KLDistance: " + klDistance(v3, v4));
+		double [] v5 = {.3, .7, 0, 0, 0};
+		double [] v6 = {0, .7, 0, .3, 0};
+		System.out.println("KLDistance: " + klDistance(v5, v6));
+	}
+
+	private double klDistance (int s, int a){
+		double sum = 0.0;
+		for(int t = 0; t < world.numStates(); t++){					
+			double p1 = transitionProb(s, a, t);
+			double p2 = mentor.transitionProb(s, t);
+			//System.out.print("( " +p1+ ", " +p2+ ") ,");
+			//sum += (0.5)*(p1* Math.log(p1/p2) + p2* Math.log(p2/p1));
+			if (p2 == 0){
+				p2 = 0.00001;				
+			} 
+			sum+= -p1*Math.log(p2);
+		}
+		//System.out.println("Sum:" + sum);
+		return sum;			
+	}	
+
+
+	private int kldMinimizer(int s) {	
+		double smallestKLDistance = Double.POSITIVE_INFINITY;
+		int closestAction = 0;
+		for (int a = 0; a < actions.length; a++){
+			double thisDistance = klDistance(s, a);
+			if (thisDistance < smallestKLDistance){
+				smallestKLDistance = thisDistance;
+				closestAction = a;
+			}
+		}
+		//System.out.println(smallestKLDistance);|| cantMove(s, closestAction)
+		if (smallestKLDistance < 0.001 ){
+			//Way too Close
+			closestAction = -1;
+		} 
+		return closestAction;
+	}	
+	
+	private boolean cantMove(int s, int closestAction) {
+		int mostLikelyT = 0;
+		int highestSoFar = Integer.MIN_VALUE;
+		for (int t = 0; t < actionTally[s][closestAction].length; t++){
+			if (actionTally[s][closestAction][t] > highestSoFar){
+				highestSoFar = actionTally[s][closestAction][t];
+				mostLikelyT = t;
+			}
+		}
+		return s==mostLikelyT;
+	}
+
+	public void updateTally(int s, int a, int t) {
+		tally[s][t]++;	
+		actionTally[s][a][t]++;
+	}
+	
+	public void updateVFunction(int s, int a, double bestExpectation) {
+		double reward = world.getReward(s, a);
+		//System.out.println("Updating vmap with bestExp: " + bestExpectation);
+		vMap[s] = (ALPHA)*vMap[s] + (1-ALPHA)*(reward + GAMMA*bestExpectation);
+	}
+	
+	private double perceivedStateValue(int s){
+		double output = 0.0;
+		if(world.QLEARNING){
+			for (int a = 0; a < actions.length; a++){
+				output+= qMap[s][a];
+			}
+		} else {
+			output = vMap[s];
+		}
+		return output;
+	}
+	
+	public void printStateValues(){
+		for (int i = 0; i < world.sizeX(); i++){
+			for(int j = 0; j < world.sizeY(); j++){
+				System.out.print(perceivedStateValue(world.getStateId(i, j)) + ", ");
+			}
+			System.out.println("");
+		}		
+	}
+	
+	public void printQMap(int s){
+		System.out.println("Going from: " + world.getStateCoords(s).getX() + ", " + world.getStateCoords(s).getY() + ")");
+		int besta = 0;
+		for (int a = 0; a < this.actions.length; a++){
+			if (qMap[s][a] > qMap[s][besta]){
+				besta = a;
+			}
+		}
+		System.out.println("Taking Action: " + "(" + actions[besta].dx() + ", " + actions[besta].dy() + ")" + " has value: " + qMap[s][besta]);
+	}
+
+	public void updateQFunction(int s, int a, int t) {				
+		
+		double reward = world.getReward(s, a);
+		// end the episode
+		if (world.isTerminalState(s)) {
+			qMap[s][a] = (ALPHA)*qMap[s][a] + (1-ALPHA)*(reward);
+			visibleQMap[s] = (ALPHA)*visibleQMap[s]+ (1-ALPHA)*(reward);
+		}else {
+			//Maximizing next action:		
+			double bestNextActionValue = Double.NEGATIVE_INFINITY;
+			for (int a_Prime = 0; a_Prime < actions.length; a_Prime++){
+				if (qMap[t][a_Prime] > bestNextActionValue){
+					bestNextActionValue = qMap[t][a_Prime];
+				}
+			}
+			qMap[s][a] =     (ALPHA)*qMap[s][a] +     (1-ALPHA)*(reward + GAMMA*bestNextActionValue);
+			visibleQMap[s] = (ALPHA)*visibleQMap[s] + (1-ALPHA)*(reward + GAMMA*bestNextActionValue);
+		}
+	}
+
+}

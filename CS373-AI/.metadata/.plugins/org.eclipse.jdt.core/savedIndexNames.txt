@@ -1,0 +1,12 @@
+INDEX VERSION 1.125+/home/cs-students/njl2/cs373/.metadata/.plugins/org.eclipse.jdt.core
+2886636191.index
+787492693.index
+4248419847.index
+3311882109.index
+1278753339.index
+1001908898.index
+3029536661.index
+2748827863.index
+4226983589.index
+1208555866.index
+1564929591.index

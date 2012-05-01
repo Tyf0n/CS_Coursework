@@ -1,0 +1,41 @@
+40 39 Resource Race
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XX                                    XX
+X   X 1 1  X                X  1 1 X   X
+XX  XXXXXXXX                XXXXXXXX  XX
+X                                      X
+XX                                    XX
+X       a                      a       X
+XX                                    XX
+X                                      X
+XXX  X    XX  XXX X  X XXX  XX    X  XXX
+X  X  XaXX   X            X   XXaX  X  X
+XX  X  X   XX  XX  XX  XX  XX   X  X  XX
+X    X   XX    X X    X X    XX   X    X
+XX    XX    XXX    XX    XXX    XX    XX
+XXX     X  XX X XXX  XXX X XX  X     XXX
+XX   X        X XXXXXXXX X        X   XX
+X      XXXXXX    XXXXXX    XXXXXX      X
+XXaX  a a a  XX    XX    XX  a a a  XaXX
+X  X a a a a   XXX aa XXX   a a a a X  X
+XXaaXXXXXXXXXXX  aXXXXa   XXXXXXXXXXaaXX
+X  X a a a a   XXX aa XXX   a a a a X  X
+XXaX  a a a  XX    XX    XX  a a a  XaXX
+X      XXXXXX    XXXXXX    XXXXXX      X
+XX   X        X XXXXXXXX X        X   XX
+XXX     X  XX X XXX  XXX X XX  X     XXX
+XX    XX    XXX    XX    XXX    XX    XX
+X    X   XX    X X    X X    XX   X    X
+XX  X  X   XX  XX  XX  XX  XX   X  X  XX
+X  X  XaXX   X            X   XXaX  X  X
+XXX  X    XX  XXX X  X XXX  XX    X  XXX
+X                                      X
+XX                                    XX
+X       a                      a       X
+XX                                    XX
+X                                      X
+XX  XXXXXXXX                XXXXXXXX  XX
+X   X 0 0  X                X  0 0 X   X
+XX                                    XX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+By Aaron Size

@@ -1,0 +1,27 @@
+Nathaniel Lim
+CS432 - Assignment 7
+
+
+Compile the daemon with:  make wacd 
+Compile my_clock.c with:  make my_clock
+Compile silly.c    with:  make silly
+Compile standard.c with:  make standard
+Compile shutdown.c with:  make shutdown
+
+Remove all executable files with: make clean
+
+
+Run wacd:  wacd [port]
+
+wacd will prompt you to response (y/n) 
+If you want to run in port writing mode (writing to /dev/port)
+
+
+In wac.h I have set the MAX_CONNECTIONS = 3,
+meaning that in wacd.c, the daemon gives exclusive access
+to 3 clients.  This means that a client must disconnect
+run wac_finish(), before the next client can connect.
+
+Since my_clock, silly, and standard only call wac_finish(),
+I created the shutdown program which calls wac_shutdown() which
+shuts down the daemon entirely.

@@ -1,0 +1,11 @@
+package project;
+
+public class Knight extends Piece {
+	
+	public Knight (ChessBoard world, boolean isObserver){
+		super(world, isObserver, KnightAction.values());
+	}
+
+	
+
+}

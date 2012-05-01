@@ -1,0 +1,77 @@
+diff --git a/arch/x86/include/asm/unistd_64.h b/arch/x86/include/asm/unistd_64.h
+index 8d3ad0a..27a5d29 100644
+--- a/arch/x86/include/asm/unistd_64.h
++++ b/arch/x86/include/asm/unistd_64.h
+@@ -661,6 +661,8 @@ __SYSCALL(__NR_pwritev, sys_pwritev)
+ __SYSCALL(__NR_rt_tgsigqueueinfo, sys_rt_tgsigqueueinfo)
+ #define __NR_perf_event_open			298
+ __SYSCALL(__NR_perf_event_open, sys_perf_event_open)
++#define __NR_wisdom				299
++__SYSCALL(__NR_wisdom, sys_wisdom)
+ 
+ #ifndef __NO_STUBS
+ #define __ARCH_WANT_OLD_READDIR
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 6ba163f..91f8a8f 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -317,7 +317,9 @@ static void prof_sysexit_disable_##sname(void)				       \
+ 
+ #endif /* CONFIG_HAVE_SYSCALL_WRAPPERS */
+ 
++
+ asmlinkage long sys_time(time_t __user *tloc);
++asmlinkage long sys_wisdom(char *buffer);
+ asmlinkage long sys_stime(time_t __user *tptr);
+ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
+ 				struct timezone __user *tz);
+diff --git a/kernel/time.c b/kernel/time.c
+index 2e2e469..36abe27 100644
+--- a/kernel/time.c
++++ b/kernel/time.c
+@@ -52,6 +52,8 @@ struct timezone sys_tz;
+ 
+ EXPORT_SYMBOL(sys_tz);
+ 
++static char* wordsofwisdom = "I have given you wisdom!";
++
+ #ifdef __ARCH_WANT_SYS_TIME
+ 
+ /*
+@@ -73,6 +75,36 @@ SYSCALL_DEFINE1(time, time_t __user *, tloc)
+ }
+ 
+ /*
++ *
++ *
++ *
++ */
++
++//Nathaniel Lim CS432: Assignment 1
++SYSCALL_DEFINE1(wisdom, char *, buffer)
++{
++	char * fromPointer = wordsofwisdom;
++	char * toPointer = buffer;
++	while (*fromPointer != '\0'){
++		if (put_user(*fromPointer, toPointer)){
++			return -EFAULT;
++		} else {
++			fromPointer++;
++			toPointer++;	
++		}	
++	}
++	//Copy the last null character
++	if (put_user(*fromPointer, toPointer)){
++			return -EFAULT;
++	}	
++	force_successful_syscall_return();
++	return 0;
++	
++}
++
++
++
++/*
+  * sys_stime() can be implemented in user-level using
+  * sys_settimeofday().  Is this for backwards compatibility?  If so,
+  * why not move it into the appropriate arch directory (for those
